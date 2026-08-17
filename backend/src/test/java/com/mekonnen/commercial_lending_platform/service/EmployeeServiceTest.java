@@ -2,6 +2,7 @@ package com.mekonnen.commercial_lending_platform.service;
 
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.EmployeeRole;
+import com.mekonnen.commercial_lending_platform.exception.EmployeeAlreadyExistsException;
 import com.mekonnen.commercial_lending_platform.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,8 +68,8 @@ class EmployeeServiceTest {
         when(employeeRepository.existsByEmail("john@example.com"))
                 .thenReturn(true);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        EmployeeAlreadyExistsException exception = assertThrows(
+                EmployeeAlreadyExistsException.class,
                 () -> employeeService.createEmployee(
                         "John",
                         "Smith",

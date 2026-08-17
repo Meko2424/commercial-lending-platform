@@ -2,6 +2,7 @@ package com.mekonnen.commercial_lending_platform.service;
 
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.EmployeeRole;
+import com.mekonnen.commercial_lending_platform.exception.EmployeeAlreadyExistsException;
 import com.mekonnen.commercial_lending_platform.repository.EmployeeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class EmployeeService {
             EmployeeRole role
     ) {
         if (employeeRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Employee email already exists.");
+            throw new EmployeeAlreadyExistsException("Employee email already exists.");
         }
 
         Employee employee = new Employee();
