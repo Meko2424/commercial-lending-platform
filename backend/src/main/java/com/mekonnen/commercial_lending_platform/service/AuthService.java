@@ -3,6 +3,8 @@ package com.mekonnen.commercial_lending_platform.service;
 import com.mekonnen.commercial_lending_platform.dto.LoginRequest;
 import com.mekonnen.commercial_lending_platform.dto.LoginResponse;
 import com.mekonnen.commercial_lending_platform.entity.Employee;
+import com.mekonnen.commercial_lending_platform.exception.InactiveEmployeeException;
+import com.mekonnen.commercial_lending_platform.exception.InvalidCredentialsException;
 import com.mekonnen.commercial_lending_platform.repository.EmployeeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,18 +28,18 @@ public class AuthService {
         Employee employee = employeeRepository
                 .findByEmail(request.getEmail())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid email or password.")
+                        new InvalidCredentialsException("Invalid email or password.")
                 );
 
         if (!employee.isActive()) {
-            throw new IllegalArgumentException("Employee account is inactive.");
+            throw new InactiveEmployeeException("Employee account is inactive.");
         }
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 employee.getPasswordHash()
         )) {
-            throw new IllegalArgumentException("Invalid email or password.");
+            throw new InvalidCredentialsException("Invalid email or password.");
         }
 
         return new LoginResponse(

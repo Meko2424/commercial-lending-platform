@@ -4,6 +4,8 @@ import com.mekonnen.commercial_lending_platform.dto.LoginRequest;
 import com.mekonnen.commercial_lending_platform.dto.LoginResponse;
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.EmployeeRole;
+import com.mekonnen.commercial_lending_platform.exception.InactiveEmployeeException;
+import com.mekonnen.commercial_lending_platform.exception.InvalidCredentialsException;
 import com.mekonnen.commercial_lending_platform.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,8 +91,8 @@ class AuthServiceTest {
                 "$2a$10$hashedPassword"
         )).thenReturn(false);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        InvalidCredentialsException exception = assertThrows(
+                InvalidCredentialsException.class,
                 () -> authService.authenticate(request)
         );
 
@@ -109,8 +111,8 @@ class AuthServiceTest {
         when(employeeRepository.findByEmail("unknown@example.com"))
                 .thenReturn(Optional.empty());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        InvalidCredentialsException exception = assertThrows(
+                InvalidCredentialsException.class,
                 () -> authService.authenticate(request)
         );
 
@@ -134,8 +136,8 @@ class AuthServiceTest {
         when(employeeRepository.findByEmail("john.smith@example.com"))
                 .thenReturn(Optional.of(employee));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        InactiveEmployeeException exception = assertThrows(
+                InactiveEmployeeException.class,
                 () -> authService.authenticate(request)
         );
 
