@@ -106,4 +106,35 @@ class JwtServiceTest {
                 claims.getExpiration().after(claims.getIssuedAt())
         );
     }
+
+    @Test
+    void validateToken_shouldReturnClaimsForValidToken() {
+        Employee employee = new Employee();
+
+        employee.setId(UUID.randomUUID());
+        employee.setEmail("john.smith@example.com");
+        employee.setRole(EmployeeRole.ANALYST);
+
+        String token = jwtService.generateToken(employee);
+
+        Claims claims = jwtService.validateToken(token);
+
+        assertNotNull(claims);
+        assertEquals(employee.getId().toString(), claims.getSubject());
+        assertEquals(employee.getEmail(), claims.get("email"));
+        assertEquals(
+                employee.getRole().name(),
+                claims.get("role")
+        );
+    }
+
+    @Test
+    void validateToken_shouldThrowExceptionForInvalidToken() {
+        String invalidToken = "invalid.jwt.token";
+
+        assertThrows(
+                Exception.class,
+                () -> jwtService.validateToken(invalidToken)
+        );
+    }
 }

@@ -8,6 +8,7 @@ import com.mekonnen.commercial_lending_platform.exception.InactiveEmployeeExcept
 import com.mekonnen.commercial_lending_platform.exception.InvalidCredentialsException;
 import com.mekonnen.commercial_lending_platform.service.AuthService;
 
+import com.mekonnen.commercial_lending_platform.service.JwtService;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @Test
     void login_shouldReturn200ForValidCredentials() throws Exception {

@@ -3,6 +3,7 @@ package com.mekonnen.commercial_lending_platform.service;
 
 import com.mekonnen.commercial_lending_platform.config.JwtProperties;
 import com.mekonnen.commercial_lending_platform.entity.Employee;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
@@ -47,5 +48,14 @@ public class JwtService {
 
     public long getExpirationMs() {
         return jwtProperties.getExpirationMs();
+    }
+
+    public Claims validateToken(String token) {
+
+        return Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
