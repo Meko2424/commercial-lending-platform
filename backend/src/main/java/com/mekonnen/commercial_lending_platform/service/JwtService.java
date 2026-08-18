@@ -44,4 +44,8 @@ public class JwtService {
                 .signWith(signingKey)
                 .compact();
     }
+
+    public long getExpirationMs() {
+        return jwtProperties.getExpirationMs();
+    }
 }

@@ -39,11 +39,9 @@ class AuthControllerTest {
     void login_shouldReturn200ForValidCredentials() throws Exception {
 
         LoginResponse response = new LoginResponse(
-                UUID.randomUUID(),
-                "John",
-                "Smith",
-                "john.smith@example.com",
-                EmployeeRole.ANALYST
+                "test-jwt-token",
+                "Bearer",
+                3600000L
         );
 
         when(authService.authenticate(any(LoginRequest.class)))
@@ -60,11 +58,13 @@ class AuthControllerTest {
                                         """)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Smith"))
-                .andExpect(jsonPath("$.email")
-                        .value("john.smith@example.com"))
-                .andExpect(jsonPath("$.role").value("ANALYST"));
+                .andExpect(jsonPath("$.accessToken")
+                        .value("test-jwt-token"))
+                .andExpect(jsonPath("$.tokenType")
+                        .value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn")
+                        .value(3600000));
+
     }
 
     @Test

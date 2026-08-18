@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,12 +31,15 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
+    @Mock
+    private JwtService jwtService;
+
     @Test
-    void authenticate_shouldReturnEmployeeWhenCredentialsAreValid() {
-        UUID employeeId = UUID.randomUUID();
+    void authenticate_shouldReturnJwtWhenCredentialsAreValid() {
 
         Employee employee = new Employee();
-        employee.setId(employeeId);
+
+        employee.setId(UUID.randomUUID());
         employee.setFirstName("John");
         employee.setLastName("Smith");
         employee.setEmail("john.smith@example.com");
@@ -57,14 +59,18 @@ class AuthServiceTest {
                 "$2a$10$hashedPassword"
         )).thenReturn(true);
 
+        when(jwtService.generateToken(employee))
+                .thenReturn("test-jwt-token");
+
+        when(jwtService.getExpirationMs())
+                .thenReturn(3600000L);
+
         LoginResponse response = authService.authenticate(request);
 
         assertNotNull(response);
-        assertEquals(employeeId, response.getEmployeeId());
-        assertEquals("John", response.getFirstName());
-        assertEquals("Smith", response.getLastName());
-        assertEquals("john.smith@example.com", response.getEmail());
-        assertEquals(EmployeeRole.ANALYST, response.getRole());
+        assertEquals("test-jwt-token", response.getAccessToken());
+        assertEquals("Bearer", response.getTokenType());
+        assertEquals(3600000L, response.getExpiresIn());
 
         verify(passwordEncoder).matches(
                 "Password123!",

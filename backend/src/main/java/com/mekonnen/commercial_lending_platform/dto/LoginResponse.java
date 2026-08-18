@@ -1,48 +1,30 @@
 package com.mekonnen.commercial_lending_platform.dto;
 
-import com.mekonnen.commercial_lending_platform.entity.EmployeeRole;
-
-import java.util.UUID;
-
 public class LoginResponse {
 
-    private UUID employeeId;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private EmployeeRole role;
+    private String accessToken;
+    private String tokenType;
+    private long expiresIn;
 
     public LoginResponse(
-            UUID employeeId,
-            String firstName,
-            String lastName,
-            String email,
-            EmployeeRole role
+            String accessToken,
+            String tokenType,
+            long expiresIn
     ) {
-        this.employeeId = employeeId;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.role = role;
+        this.accessToken = accessToken;
+        this.tokenType = tokenType;
+        this.expiresIn = expiresIn;
     }
 
-    public UUID getEmployeeId() {
-        return employeeId;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getTokenType() {
+        return tokenType;
     }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public EmployeeRole getRole() {
-        return role;
+    public long getExpiresIn() {
+        return expiresIn;
     }
 }
