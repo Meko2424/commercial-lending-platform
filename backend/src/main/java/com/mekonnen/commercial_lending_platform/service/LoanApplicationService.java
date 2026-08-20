@@ -2,6 +2,7 @@ package com.mekonnen.commercial_lending_platform.service;
 
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplication;
+import com.mekonnen.commercial_lending_platform.entity.LoanApplicationStatus;
 import com.mekonnen.commercial_lending_platform.repository.LoanApplicationRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -55,5 +56,33 @@ public class LoanApplicationService {
         }
 
         return application;
+    }
+
+    public LoanApplication moveToUnderReview(
+            UUID applicationId,
+            UUID employeeId
+    ) {
+        LoanApplication application = loanApplicationRepository.findById(applicationId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Loan application not found."
+                        )
+                );
+
+        if (!application.getCreatedBy().getId().equals(employeeId)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to review this loan application."
+            );
+        }
+
+        if (application.getStatus() != LoanApplicationStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING applications can be moved to UNDER_REVIEW."
+            );
+        }
+
+        application.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+
+        return loanApplicationRepository.save(application);
     }
 }

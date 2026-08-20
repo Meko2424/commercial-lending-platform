@@ -9,6 +9,7 @@ import com.mekonnen.commercial_lending_platform.service.LoanApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,6 +69,25 @@ public class LoanApplicationController {
                         id,
                         employeeId,
                         isAdmin
+                );
+
+        return ResponseEntity.ok(
+                LoanApplicationResponse.fromEntity(application)
+        );
+    }
+
+    @PreAuthorize("hasRole('ANALYST')")
+    @PatchMapping("/{id}/under-review")
+    public ResponseEntity<LoanApplicationResponse> moveToUnderReview(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        UUID employeeId = UUID.fromString(authentication.getName());
+
+        LoanApplication application =
+                loanApplicationService.moveToUnderReview(
+                        id,
+                        employeeId
                 );
 
         return ResponseEntity.ok(

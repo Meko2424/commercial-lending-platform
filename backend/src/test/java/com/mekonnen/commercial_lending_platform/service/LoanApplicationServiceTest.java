@@ -3,6 +3,7 @@ package com.mekonnen.commercial_lending_platform.service;
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.EmployeeRole;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplication;
+import com.mekonnen.commercial_lending_platform.entity.LoanApplicationStatus;
 import com.mekonnen.commercial_lending_platform.repository.LoanApplicationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,5 +140,72 @@ class LoanApplicationServiceTest {
         );
 
         verify(loanApplicationRepository).findById(applicationId);
+    }
+
+    @Test
+    void moveToUnderReview_shouldChangeStatusForOwner() {
+
+        application.setStatus(LoanApplicationStatus.PENDING);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        when(loanApplicationRepository.save(application))
+                .thenReturn(application);
+
+        LoanApplication result =
+                loanApplicationService.moveToUnderReview(
+                        applicationId,
+                        employeeId
+                );
+
+        assertNotNull(result);
+        assertEquals(
+                LoanApplicationStatus.UNDER_REVIEW,
+                result.getStatus()
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository).save(application);
+    }
+
+    @Test
+    void moveToUnderReview_shouldThrowAccessDeniedForNonOwner() {
+
+        application.setStatus(LoanApplicationStatus.PENDING);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> loanApplicationService.moveToUnderReview(
+                        applicationId,
+                        otherEmployeeId
+                )
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository, never()).save(any());
+    }
+
+    @Test
+    void moveToUnderReview_shouldRejectNonPendingApplication() {
+
+        application.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> loanApplicationService.moveToUnderReview(
+                        applicationId,
+                        employeeId
+                )
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository, never()).save(any());
     }
 }
