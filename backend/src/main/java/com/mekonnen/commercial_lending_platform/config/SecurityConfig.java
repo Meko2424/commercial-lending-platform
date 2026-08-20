@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/employees/**").authenticated()
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/loan-applications/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
