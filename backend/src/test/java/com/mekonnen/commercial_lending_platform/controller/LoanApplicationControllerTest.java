@@ -73,8 +73,8 @@ class LoanApplicationControllerTest {
         application.setCreatedBy(employee);
 
         when(loanApplicationService.moveToUnderReview(
-                applicationId,
-                employeeId
+                applicationId
+                //employeeId
         )).thenReturn(application);
 
         UsernamePasswordAuthenticationToken authentication =
@@ -102,7 +102,7 @@ class LoanApplicationControllerTest {
                         .value("UNDER_REVIEW"));
 
         verify(loanApplicationService)
-                .moveToUnderReview(applicationId, employeeId);
+                .moveToUnderReview(applicationId);
     }
 
     @Test
@@ -113,8 +113,8 @@ class LoanApplicationControllerTest {
         UUID employeeId = UUID.randomUUID();
 
         when(loanApplicationService.moveToUnderReview(
-                applicationId,
-                employeeId
+                applicationId
+                //employeeId
         )).thenThrow(
                 new IllegalStateException(
                         "Only PENDING applications can be moved to UNDER_REVIEW."
@@ -145,7 +145,7 @@ class LoanApplicationControllerTest {
                         ));
 
         verify(loanApplicationService)
-                .moveToUnderReview(applicationId, employeeId);
+                .moveToUnderReview(applicationId);
     }
 
     @Test
@@ -170,7 +170,8 @@ class LoanApplicationControllerTest {
         when(loanApplicationService.makeDecision(
                 applicationId,
                 adminId,
-                LoanApplicationStatus.APPROVED
+                LoanApplicationStatus.APPROVED,
+                "Strong financial performance."
         )).thenReturn(application);
 
         UsernamePasswordAuthenticationToken authentication =
@@ -191,7 +192,8 @@ class LoanApplicationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
-                                        "decision": "APPROVED"
+                                        "decision": "APPROVED",
+                                        "decisionReason": "Strong financial performance."
                                     }
                                     """)
                 )
@@ -205,7 +207,8 @@ class LoanApplicationControllerTest {
                 .makeDecision(
                         applicationId,
                         adminId,
-                        LoanApplicationStatus.APPROVED
+                        LoanApplicationStatus.APPROVED,
+                        "Strong financial performance."
                 );
     }
 
@@ -231,7 +234,8 @@ class LoanApplicationControllerTest {
         when(loanApplicationService.makeDecision(
                 applicationId,
                 adminId,
-                LoanApplicationStatus.REJECTED
+                LoanApplicationStatus.REJECTED,
+                "Insufficient cash flow."
         )).thenReturn(application);
 
         UsernamePasswordAuthenticationToken authentication =
@@ -252,7 +256,8 @@ class LoanApplicationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
-                                        "decision": "REJECTED"
+                                        "decision": "REJECTED",
+                                        "decisionReason": "Insufficient cash flow."
                                     }
                                     """)
                 )
@@ -266,7 +271,8 @@ class LoanApplicationControllerTest {
                 .makeDecision(
                         applicationId,
                         adminId,
-                        LoanApplicationStatus.REJECTED
+                        LoanApplicationStatus.REJECTED,
+                        "Insufficient cash flow."
                 );
     }
 
@@ -280,7 +286,8 @@ class LoanApplicationControllerTest {
         when(loanApplicationService.makeDecision(
                 applicationId,
                 adminId,
-                LoanApplicationStatus.APPROVED
+                LoanApplicationStatus.APPROVED,
+                "Strong financial performance."
         )).thenThrow(
                 new IllegalStateException(
                         "Only UNDER_REVIEW applications can be approved or rejected."
@@ -305,7 +312,8 @@ class LoanApplicationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
-                                        "decision": "APPROVED"
+                                        "decision": "APPROVED",
+                                        "decisionReason": "Strong financial performance."
                                     }
                                     """)
                 )
@@ -320,7 +328,8 @@ class LoanApplicationControllerTest {
                 .makeDecision(
                         applicationId,
                         adminId,
-                        LoanApplicationStatus.APPROVED
+                        LoanApplicationStatus.APPROVED,
+                        "Strong financial performance."
                 );
     }
 

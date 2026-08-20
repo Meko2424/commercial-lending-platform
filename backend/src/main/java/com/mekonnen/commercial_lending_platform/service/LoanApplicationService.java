@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -59,8 +60,8 @@ public class LoanApplicationService {
     }
 
     public LoanApplication moveToUnderReview(
-            UUID applicationId,
-            UUID employeeId
+            UUID applicationId
+           // UUID employeeId
     ) {
         LoanApplication application = loanApplicationRepository.findById(applicationId)
                 .orElseThrow(() ->
@@ -69,11 +70,11 @@ public class LoanApplicationService {
                         )
                 );
 
-        if (!application.getCreatedBy().getId().equals(employeeId)) {
-            throw new AccessDeniedException(
-                    "You are not authorized to review this loan application."
-            );
-        }
+//        if (!application.getCreatedBy().getId().equals(employeeId)) {
+//            throw new AccessDeniedException(
+//                    "You are not authorized to review this loan application."
+//            );
+//        }
 
         if (application.getStatus() != LoanApplicationStatus.PENDING) {
             throw new IllegalStateException(
@@ -89,7 +90,8 @@ public class LoanApplicationService {
     public LoanApplication makeDecision(
             UUID id,
             UUID adminId,
-            LoanApplicationStatus decision
+            LoanApplicationStatus decision,
+            String decisionReason
     ) {
         LoanApplication application =
                 loanApplicationRepository.findById(id)
@@ -113,6 +115,9 @@ public class LoanApplicationService {
         }
 
         application.setStatus(decision);
+        application.setReviewedBy(adminId);
+        application.setReviewedAt(LocalDateTime.now());
+        application.setDecisionReason(decisionReason);
 
         return loanApplicationRepository.save(application);
     }

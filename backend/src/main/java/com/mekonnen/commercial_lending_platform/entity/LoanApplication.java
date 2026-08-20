@@ -47,6 +47,14 @@ public class LoanApplication {
             status = LoanApplicationStatus.PENDING;
         }
     }
+    @Column(name = "reviewed_by")
+    private UUID reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @Column(name = "decision_reason", length = 1000)
+    private String decisionReason;
 
     @PreUpdate
     protected void onUpdate() {
@@ -110,5 +118,28 @@ public class LoanApplication {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+    public UUID getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(UUID reviewedBy) {
+        this.reviewedBy = reviewedBy;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public void setReviewedAt(LocalDateTime reviewedAt) {
+        this.reviewedAt = reviewedAt;
+    }
+
+    public String getDecisionReason() {
+        return decisionReason;
+    }
+
+    public void setDecisionReason(String decisionReason) {
+        this.decisionReason = decisionReason;
     }
 }

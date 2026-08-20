@@ -87,8 +87,8 @@ public class LoanApplicationController {
 
         LoanApplication application =
                 loanApplicationService.moveToUnderReview(
-                        id,
-                        employeeId
+                        id
+                        //employeeId
                 );
 
         return ResponseEntity.ok(
@@ -109,7 +109,8 @@ public class LoanApplicationController {
                 loanApplicationService.makeDecision(
                         id,
                         adminId,
-                        request.getDecision()
+                        request.getDecision(),
+                        request.getDecisionReason()
                 );
 
         return ResponseEntity.ok(

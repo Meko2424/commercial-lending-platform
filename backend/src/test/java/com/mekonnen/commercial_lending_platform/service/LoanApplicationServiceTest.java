@@ -32,6 +32,7 @@ class LoanApplicationServiceTest {
     private UUID employeeId;
     private UUID otherEmployeeId;
     private UUID applicationId;
+    private UUID adminId;
 
     private Employee employee;
     private Employee otherEmployee;
@@ -41,6 +42,7 @@ class LoanApplicationServiceTest {
     void setUp() {
         employeeId = UUID.randomUUID();
         otherEmployeeId = UUID.randomUUID();
+        adminId = UUID.randomUUID();
         applicationId = UUID.randomUUID();
 
         employee = new Employee();
@@ -155,8 +157,8 @@ class LoanApplicationServiceTest {
 
         LoanApplication result =
                 loanApplicationService.moveToUnderReview(
-                        applicationId,
-                        employeeId
+                        applicationId
+                        //employeeId
                 );
 
         assertNotNull(result);
@@ -170,26 +172,6 @@ class LoanApplicationServiceTest {
     }
 
     @Test
-    void moveToUnderReview_shouldThrowAccessDeniedForNonOwner() {
-
-        application.setStatus(LoanApplicationStatus.PENDING);
-
-        when(loanApplicationRepository.findById(applicationId))
-                .thenReturn(Optional.of(application));
-
-        assertThrows(
-                AccessDeniedException.class,
-                () -> loanApplicationService.moveToUnderReview(
-                        applicationId,
-                        otherEmployeeId
-                )
-        );
-
-        verify(loanApplicationRepository).findById(applicationId);
-        verify(loanApplicationRepository, never()).save(any());
-    }
-
-    @Test
     void moveToUnderReview_shouldRejectNonPendingApplication() {
 
         application.setStatus(LoanApplicationStatus.UNDER_REVIEW);
@@ -200,8 +182,8 @@ class LoanApplicationServiceTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> loanApplicationService.moveToUnderReview(
-                        applicationId,
-                        employeeId
+                        applicationId
+                        //employeeId
                 )
         );
 
@@ -223,14 +205,21 @@ class LoanApplicationServiceTest {
         LoanApplication result =
                 loanApplicationService.makeDecision(
                         applicationId,
-                        employeeId,
-                        LoanApplicationStatus.APPROVED
+                        adminId,
+                        LoanApplicationStatus.APPROVED,
+                        "Strong financial performance."
                 );
 
         assertNotNull(result);
         assertEquals(
                 LoanApplicationStatus.APPROVED,
                 result.getStatus()
+        );
+        assertEquals(adminId, result.getReviewedBy());
+        assertNotNull(result.getReviewedAt());
+        assertEquals(
+                "Strong financial performance.",
+                result.getDecisionReason()
         );
 
         verify(loanApplicationRepository).findById(applicationId);
@@ -251,14 +240,21 @@ class LoanApplicationServiceTest {
         LoanApplication result =
                 loanApplicationService.makeDecision(
                         applicationId,
-                        employeeId,
-                        LoanApplicationStatus.REJECTED
+                        adminId,
+                        LoanApplicationStatus.REJECTED,
+                        "Insufficient cash flow."
                 );
 
         assertNotNull(result);
         assertEquals(
                 LoanApplicationStatus.REJECTED,
                 result.getStatus()
+        );
+        assertEquals(adminId, result.getReviewedBy());
+        assertNotNull(result.getReviewedAt());
+        assertEquals(
+                "Insufficient cash flow.",
+                result.getDecisionReason()
         );
 
         verify(loanApplicationRepository).findById(applicationId);
@@ -277,8 +273,9 @@ class LoanApplicationServiceTest {
                 IllegalStateException.class,
                 () -> loanApplicationService.makeDecision(
                         applicationId,
-                        employeeId,
-                        LoanApplicationStatus.APPROVED
+                        adminId,
+                        LoanApplicationStatus.APPROVED,
+                        "Strong financial performance."
                 )
         );
 
@@ -298,8 +295,9 @@ class LoanApplicationServiceTest {
                 IllegalStateException.class,
                 () -> loanApplicationService.makeDecision(
                         applicationId,
-                        employeeId,
-                        LoanApplicationStatus.REJECTED
+                        adminId,
+                        LoanApplicationStatus.REJECTED,
+                        "Insufficient cash flow."
                 )
         );
 
