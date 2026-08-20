@@ -1,6 +1,7 @@
 package com.mekonnen.commercial_lending_platform.controller;
 
 import com.mekonnen.commercial_lending_platform.dto.CreateLoanApplicationRequest;
+import com.mekonnen.commercial_lending_platform.dto.LoanApplicationDecisionRequest;
 import com.mekonnen.commercial_lending_platform.dto.LoanApplicationResponse;
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplication;
@@ -88,6 +89,27 @@ public class LoanApplicationController {
                 loanApplicationService.moveToUnderReview(
                         id,
                         employeeId
+                );
+
+        return ResponseEntity.ok(
+                LoanApplicationResponse.fromEntity(application)
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/decision")
+    public ResponseEntity<LoanApplicationResponse> makeDecision(
+            @PathVariable UUID id,
+            @Valid @RequestBody LoanApplicationDecisionRequest request,
+            Authentication authentication
+    ) {
+        UUID adminId = UUID.fromString(authentication.getName());
+
+        LoanApplication application =
+                loanApplicationService.makeDecision(
+                        id,
+                        adminId,
+                        request.getDecision()
                 );
 
         return ResponseEntity.ok(

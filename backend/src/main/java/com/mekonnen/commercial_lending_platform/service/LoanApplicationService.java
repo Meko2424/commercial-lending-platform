@@ -85,4 +85,35 @@ public class LoanApplicationService {
 
         return loanApplicationRepository.save(application);
     }
+
+    public LoanApplication makeDecision(
+            UUID id,
+            UUID adminId,
+            LoanApplicationStatus decision
+    ) {
+        LoanApplication application =
+                loanApplicationRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Loan application not found."
+                                )
+                        );
+
+        if (application.getStatus() != LoanApplicationStatus.UNDER_REVIEW) {
+            throw new IllegalStateException(
+                    "Only UNDER_REVIEW applications can be approved or rejected."
+            );
+        }
+
+        if (decision != LoanApplicationStatus.APPROVED
+                && decision != LoanApplicationStatus.REJECTED) {
+            throw new IllegalArgumentException(
+                    "Decision must be APPROVED or REJECTED."
+            );
+        }
+
+        application.setStatus(decision);
+
+        return loanApplicationRepository.save(application);
+    }
 }

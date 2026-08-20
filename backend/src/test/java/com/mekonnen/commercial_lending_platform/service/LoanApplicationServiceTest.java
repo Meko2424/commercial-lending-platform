@@ -208,4 +208,102 @@ class LoanApplicationServiceTest {
         verify(loanApplicationRepository).findById(applicationId);
         verify(loanApplicationRepository, never()).save(any());
     }
+
+    @Test
+    void makeDecision_shouldApproveUnderReviewApplication() {
+
+        application.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        when(loanApplicationRepository.save(application))
+                .thenReturn(application);
+
+        LoanApplication result =
+                loanApplicationService.makeDecision(
+                        applicationId,
+                        employeeId,
+                        LoanApplicationStatus.APPROVED
+                );
+
+        assertNotNull(result);
+        assertEquals(
+                LoanApplicationStatus.APPROVED,
+                result.getStatus()
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository).save(application);
+    }
+
+    @Test
+    void makeDecision_shouldRejectUnderReviewApplication() {
+
+        application.setStatus(LoanApplicationStatus.UNDER_REVIEW);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        when(loanApplicationRepository.save(application))
+                .thenReturn(application);
+
+        LoanApplication result =
+                loanApplicationService.makeDecision(
+                        applicationId,
+                        employeeId,
+                        LoanApplicationStatus.REJECTED
+                );
+
+        assertNotNull(result);
+        assertEquals(
+                LoanApplicationStatus.REJECTED,
+                result.getStatus()
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository).save(application);
+    }
+
+    @Test
+    void makeDecision_shouldRejectApprovalWhenApplicationIsPending() {
+
+        application.setStatus(LoanApplicationStatus.PENDING);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> loanApplicationService.makeDecision(
+                        applicationId,
+                        employeeId,
+                        LoanApplicationStatus.APPROVED
+                )
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository, never()).save(any());
+    }
+
+    @Test
+    void makeDecision_shouldRejectRejectionWhenApplicationIsPending() {
+
+        application.setStatus(LoanApplicationStatus.PENDING);
+
+        when(loanApplicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(application));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> loanApplicationService.makeDecision(
+                        applicationId,
+                        employeeId,
+                        LoanApplicationStatus.REJECTED
+                )
+        );
+
+        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository, never()).save(any());
+    }
 }

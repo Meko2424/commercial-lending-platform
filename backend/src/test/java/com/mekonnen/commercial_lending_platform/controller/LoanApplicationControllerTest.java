@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,9 +23,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -146,5 +146,214 @@ class LoanApplicationControllerTest {
 
         verify(loanApplicationService)
                 .moveToUnderReview(applicationId, employeeId);
+    }
+
+    @Test
+    void makeDecision_shouldReturn200WhenAdminApproves() throws Exception {
+
+        UUID applicationId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+
+        Employee employee = new Employee();
+        employee.setId(UUID.randomUUID());
+
+        LoanApplication application = new LoanApplication();
+        application.setId(applicationId);
+        application.setBusinessName("Beta Logistics");
+        application.setRequestedAmount(
+                new BigDecimal("150000.00")
+        );
+        application.setPurpose("Working capital for expansion");
+        application.setStatus(LoanApplicationStatus.APPROVED);
+        application.setCreatedBy(employee);
+
+        when(loanApplicationService.makeDecision(
+                applicationId,
+                adminId,
+                LoanApplicationStatus.APPROVED
+        )).thenReturn(application);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        adminId.toString(),
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
+                        )
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/loan-applications/{id}/decision",
+                                applicationId
+                        )
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "decision": "APPROVED"
+                                    }
+                                    """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id")
+                        .value(applicationId.toString()))
+                .andExpect(jsonPath("$.status")
+                        .value("APPROVED"));
+
+        verify(loanApplicationService)
+                .makeDecision(
+                        applicationId,
+                        adminId,
+                        LoanApplicationStatus.APPROVED
+                );
+    }
+
+    @Test
+    void makeDecision_shouldReturn200WhenAdminRejects() throws Exception {
+
+        UUID applicationId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+
+        Employee employee = new Employee();
+        employee.setId(UUID.randomUUID());
+
+        LoanApplication application = new LoanApplication();
+        application.setId(applicationId);
+        application.setBusinessName("Beta Logistics");
+        application.setRequestedAmount(
+                new BigDecimal("150000.00")
+        );
+        application.setPurpose("Working capital for expansion");
+        application.setStatus(LoanApplicationStatus.REJECTED);
+        application.setCreatedBy(employee);
+
+        when(loanApplicationService.makeDecision(
+                applicationId,
+                adminId,
+                LoanApplicationStatus.REJECTED
+        )).thenReturn(application);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        adminId.toString(),
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
+                        )
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/loan-applications/{id}/decision",
+                                applicationId
+                        )
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "decision": "REJECTED"
+                                    }
+                                    """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id")
+                        .value(applicationId.toString()))
+                .andExpect(jsonPath("$.status")
+                        .value("REJECTED"));
+
+        verify(loanApplicationService)
+                .makeDecision(
+                        applicationId,
+                        adminId,
+                        LoanApplicationStatus.REJECTED
+                );
+    }
+
+    @Test
+    void makeDecision_shouldReturn409WhenApplicationIsNotUnderReview()
+            throws Exception {
+
+        UUID applicationId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+
+        when(loanApplicationService.makeDecision(
+                applicationId,
+                adminId,
+                LoanApplicationStatus.APPROVED
+        )).thenThrow(
+                new IllegalStateException(
+                        "Only UNDER_REVIEW applications can be approved or rejected."
+                )
+        );
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        adminId.toString(),
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
+                        )
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/loan-applications/{id}/decision",
+                                applicationId
+                        )
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "decision": "APPROVED"
+                                    }
+                                    """)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message")
+                        .value(
+                                "Only UNDER_REVIEW applications can be approved or rejected."
+                        ));
+
+        verify(loanApplicationService)
+                .makeDecision(
+                        applicationId,
+                        adminId,
+                        LoanApplicationStatus.APPROVED
+                );
+    }
+
+    @Test
+    void makeDecision_shouldReturn400WhenDecisionIsMissing()
+            throws Exception {
+
+        UUID applicationId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        adminId.toString(),
+                        null,
+                        List.of(
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
+                        )
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/loan-applications/{id}/decision",
+                                applicationId
+                        )
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                    }
+                                    """)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(loanApplicationService);
     }
 }
