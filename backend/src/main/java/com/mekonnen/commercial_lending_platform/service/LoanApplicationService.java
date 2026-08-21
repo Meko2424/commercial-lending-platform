@@ -87,7 +87,7 @@ public class LoanApplicationService {
         LoanApplication application =
                 loanApplicationRepository.findById(id)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
+                                new LoanApplicationNotFoundException(
                                         "Loan application not found."
                                 )
                         );
