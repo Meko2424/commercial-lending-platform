@@ -5,6 +5,7 @@ import com.mekonnen.commercial_lending_platform.dto.LoanApplicationDecisionReque
 import com.mekonnen.commercial_lending_platform.dto.LoanApplicationResponse;
 import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplication;
+import com.mekonnen.commercial_lending_platform.entity.LoanApplicationStatus;
 import com.mekonnen.commercial_lending_platform.service.EmployeeService;
 import com.mekonnen.commercial_lending_platform.service.LoanApplicationService;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -53,24 +55,13 @@ public class LoanApplicationController {
                 .body(LoanApplicationResponse.fromEntity(application));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST')")
     @GetMapping("/{id}")
     public ResponseEntity<LoanApplicationResponse> getLoanApplication(
-            @PathVariable UUID id,
-            Authentication authentication
+            @PathVariable UUID id
     ) {
-        UUID employeeId = UUID.fromString(authentication.getName());
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(authority ->
-                        authority.getAuthority().equals("ROLE_ADMIN")
-                );
-
         LoanApplication application =
-                loanApplicationService.getLoanApplication(
-                        id,
-                        employeeId,
-                        isAdmin
-                );
+                loanApplicationService.getLoanApplication(id);
 
         return ResponseEntity.ok(
                 LoanApplicationResponse.fromEntity(application)
@@ -116,5 +107,21 @@ public class LoanApplicationController {
         return ResponseEntity.ok(
                 LoanApplicationResponse.fromEntity(application)
         );
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALYST')")
+    @GetMapping
+    public ResponseEntity<List<LoanApplicationResponse>> getLoanApplications(
+            @RequestParam(required = false) LoanApplicationStatus status
+    ) {
+        List<LoanApplication> applications =
+                loanApplicationService.getLoanApplications(status);
+
+        List<LoanApplicationResponse> responses =
+                applications.stream()
+                        .map(LoanApplicationResponse::fromEntity)
+                        .toList();
+
+        return ResponseEntity.ok(responses);
     }
 }

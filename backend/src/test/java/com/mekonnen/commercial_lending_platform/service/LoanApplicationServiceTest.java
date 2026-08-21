@@ -4,6 +4,7 @@ import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.EmployeeRole;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplication;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplicationStatus;
+import com.mekonnen.commercial_lending_platform.exception.LoanApplicationNotFoundException;
 import com.mekonnen.commercial_lending_platform.repository.LoanApplicationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,9 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,60 +71,23 @@ class LoanApplicationServiceTest {
     }
 
     @Test
-    void getLoanApplication_shouldReturnApplicationForOwner() {
+    void getLoanApplication_shouldReturnApplicationWhenItExists() {
 
         when(loanApplicationRepository.findById(applicationId))
                 .thenReturn(Optional.of(application));
 
         LoanApplication result =
-                loanApplicationService.getLoanApplication(
-                        applicationId,
-                        employeeId,
-                        false
-                );
+                loanApplicationService.getLoanApplication(applicationId);
 
         assertNotNull(result);
         assertEquals(applicationId, result.getId());
-        assertEquals(employeeId, result.getCreatedBy().getId());
-
-        verify(loanApplicationRepository).findById(applicationId);
-    }
-
-    @Test
-    void getLoanApplication_shouldReturnApplicationForAdmin() {
-
-        when(loanApplicationRepository.findById(applicationId))
-                .thenReturn(Optional.of(application));
-
-        LoanApplication result =
-                loanApplicationService.getLoanApplication(
-                        applicationId,
-                        otherEmployeeId,
-                        true
-                );
-
-        assertNotNull(result);
-        assertEquals(applicationId, result.getId());
-
-        verify(loanApplicationRepository).findById(applicationId);
-    }
-
-    @Test
-    void getLoanApplication_shouldThrowAccessDeniedForNonOwner() {
-
-        when(loanApplicationRepository.findById(applicationId))
-                .thenReturn(Optional.of(application));
-
-        assertThrows(
-                AccessDeniedException.class,
-                () -> loanApplicationService.getLoanApplication(
-                        applicationId,
-                        otherEmployeeId,
-                        false
-                )
+        assertEquals(
+                employeeId,
+                result.getCreatedBy().getId()
         );
 
-        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository)
+                .findById(applicationId);
     }
 
     @Test
@@ -133,15 +97,13 @@ class LoanApplicationServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalArgumentException.class,
-                () -> loanApplicationService.getLoanApplication(
-                        applicationId,
-                        employeeId,
-                        false
-                )
+                LoanApplicationNotFoundException.class,
+                () -> loanApplicationService
+                        .getLoanApplication(applicationId)
         );
 
-        verify(loanApplicationRepository).findById(applicationId);
+        verify(loanApplicationRepository)
+                .findById(applicationId);
     }
 
     @Test
@@ -303,5 +265,61 @@ class LoanApplicationServiceTest {
 
         verify(loanApplicationRepository).findById(applicationId);
         verify(loanApplicationRepository, never()).save(any());
+    }
+
+    @Test
+    void getLoanApplications_shouldReturnAllApplicationsWhenStatusIsNull() {
+
+        LoanApplication secondApplication = new LoanApplication();
+        secondApplication.setId(UUID.randomUUID());
+        secondApplication.setBusinessName("Beta Logistics");
+        secondApplication.setStatus(LoanApplicationStatus.APPROVED);
+        secondApplication.setCreatedBy(employee);
+
+        application.setStatus(LoanApplicationStatus.PENDING);
+
+        when(loanApplicationRepository.findAll())
+                .thenReturn(List.of(application, secondApplication));
+
+        List<LoanApplication> result =
+                loanApplicationService.getLoanApplications(null);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+
+        verify(loanApplicationRepository).findAll();
+    }
+
+    @Test
+    void getLoanApplications_shouldReturnApplicationsByStatus() {
+
+        LoanApplication secondApplication = new LoanApplication();
+        secondApplication.setId(UUID.randomUUID());
+        secondApplication.setBusinessName("Beta Logistics");
+        secondApplication.setStatus(LoanApplicationStatus.APPROVED);
+        secondApplication.setCreatedBy(employee);
+
+        application.setStatus(LoanApplicationStatus.PENDING);
+
+        when(loanApplicationRepository.findAll())
+                .thenReturn(List.of(application, secondApplication));
+
+        List<LoanApplication> result =
+                loanApplicationService.getLoanApplications(
+                        LoanApplicationStatus.PENDING
+                );
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(
+                LoanApplicationStatus.PENDING,
+                result.get(0).getStatus()
+        );
+        assertEquals(
+                application.getId(),
+                result.get(0).getId()
+        );
+
+        verify(loanApplicationRepository).findAll();
     }
 }

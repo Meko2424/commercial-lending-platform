@@ -69,4 +69,19 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(error);
     }
+
+    @ExceptionHandler(LoanApplicationNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleLoanApplicationNotFound(
+            LoanApplicationNotFoundException exception
+    ) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
 }

@@ -4,6 +4,7 @@ import com.mekonnen.commercial_lending_platform.entity.Employee;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplication;
 import com.mekonnen.commercial_lending_platform.entity.LoanApplicationStatus;
 import com.mekonnen.commercial_lending_platform.exception.GlobalExceptionHandler;
+import com.mekonnen.commercial_lending_platform.exception.LoanApplicationNotFoundException;
 import com.mekonnen.commercial_lending_platform.service.EmployeeService;
 import com.mekonnen.commercial_lending_platform.service.LoanApplicationService;
 
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -364,5 +366,136 @@ class LoanApplicationControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(loanApplicationService);
+    }
+
+    @Test
+    void getLoanApplications_shouldReturnAllApplications() throws Exception {
+
+        UUID firstApplicationId = UUID.randomUUID();
+        UUID secondApplicationId = UUID.randomUUID();
+        UUID employeeId = UUID.randomUUID();
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+
+        LoanApplication firstApplication = new LoanApplication();
+        firstApplication.setId(firstApplicationId);
+        firstApplication.setBusinessName("Acme Manufacturing");
+        firstApplication.setRequestedAmount(
+                new BigDecimal("250000.00")
+        );
+        firstApplication.setPurpose("Purchase equipment");
+        firstApplication.setStatus(LoanApplicationStatus.PENDING);
+        firstApplication.setCreatedBy(employee);
+
+        LoanApplication secondApplication = new LoanApplication();
+        secondApplication.setId(secondApplicationId);
+        secondApplication.setBusinessName("Beta Logistics");
+        secondApplication.setRequestedAmount(
+                new BigDecimal("150000.00")
+        );
+        secondApplication.setPurpose("Working capital");
+        secondApplication.setStatus(LoanApplicationStatus.APPROVED);
+        secondApplication.setCreatedBy(employee);
+
+        when(loanApplicationService.getLoanApplications(null))
+                .thenReturn(List.of(firstApplication, secondApplication));
+
+        mockMvc.perform(
+                        get("/api/loan-applications")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id")
+                        .value(firstApplicationId.toString()))
+                .andExpect(jsonPath("$[0].businessName")
+                        .value("Acme Manufacturing"))
+                .andExpect(jsonPath("$[0].status")
+                        .value("PENDING"))
+                .andExpect(jsonPath("$[1].id")
+                        .value(secondApplicationId.toString()))
+                .andExpect(jsonPath("$[1].businessName")
+                        .value("Beta Logistics"))
+                .andExpect(jsonPath("$[1].status")
+                        .value("APPROVED"));
+
+        verify(loanApplicationService)
+                .getLoanApplications(null);
+    }
+
+    @Test
+    void getLoanApplications_shouldReturnApplicationsByStatus()
+            throws Exception {
+
+        UUID applicationId = UUID.randomUUID();
+        UUID employeeId = UUID.randomUUID();
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+
+        LoanApplication application = new LoanApplication();
+        application.setId(applicationId);
+        application.setBusinessName("Acme Manufacturing");
+        application.setRequestedAmount(
+                new BigDecimal("250000.00")
+        );
+        application.setPurpose("Purchase equipment");
+        application.setStatus(LoanApplicationStatus.PENDING);
+        application.setCreatedBy(employee);
+
+        when(loanApplicationService.getLoanApplications(
+                LoanApplicationStatus.PENDING
+        )).thenReturn(List.of(application));
+
+        mockMvc.perform(
+                        get("/api/loan-applications")
+                                .param(
+                                        "status",
+                                        "PENDING"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id")
+                        .value(applicationId.toString()))
+                .andExpect(jsonPath("$[0].businessName")
+                        .value("Acme Manufacturing"))
+                .andExpect(jsonPath("$[0].status")
+                        .value("PENDING"));
+
+        verify(loanApplicationService)
+                .getLoanApplications(
+                        LoanApplicationStatus.PENDING
+                );
+    }
+
+    @Test
+    void getLoanApplication_shouldReturn404WhenApplicationDoesNotExist()
+            throws Exception {
+
+        UUID applicationId = UUID.randomUUID();
+
+        when(loanApplicationService.getLoanApplication(applicationId))
+                .thenThrow(
+                        new LoanApplicationNotFoundException(
+                                "Loan application not found."
+                        )
+                );
+
+        mockMvc.perform(
+                        get(
+                                "/api/loan-applications/{id}",
+                                applicationId
+                        )
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Loan application not found."));
+
+        verify(loanApplicationService)
+                .getLoanApplication(applicationId);
     }
 }
